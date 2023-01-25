@@ -9,7 +9,7 @@ pipeline {
             bat 'gradlew test'
             junit allowEmptyResults: true, testResults: '**/test-results/test/*.xml'
             echo 'Archiving artifacts...'
-            archiveArtifacts 'build/test-results/**/*'
+            archiveArtifacts '/**/*'
             echo 'Generation Cucumber report'
             cucumber buildStatus: 'UNSTABLE',
                        reportTitle: 'My report',
