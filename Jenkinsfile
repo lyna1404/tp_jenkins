@@ -18,6 +18,24 @@ pipeline {
         }
     }
 
+    stage('Code Analysis') {
+            steps {
+                echo 'Running gradle sonar'
+                withSonarQubeEnv('sonar') {
+                  sh './gradlew sonar'
+                }
+            }
+        }
+
+
+
+        stage("Code Quality") {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                   waitForQualityGate abortPipeline: true
+                }
+            }
+        }
 
 
   }
