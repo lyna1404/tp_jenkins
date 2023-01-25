@@ -22,7 +22,7 @@ pipeline {
             steps {
                 echo 'Running gradle sonar'
                 withSonarQubeEnv('sonar') {
-                  sh './gradlew sonar'
+                  bat 'gradlew sonar'
                 }
             }
         }
