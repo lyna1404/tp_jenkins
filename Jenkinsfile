@@ -39,6 +39,15 @@ pipeline {
                     }
                 }
 
+         stage("Build") {
+                    steps {
+                        bat 'gradlew build'
+                        bat 'gradlew javadoc'
+                        archiveArtifacts 'build/libs/*.jar'
+                        archiveArtifacts 'build/docs/'
+                    }
+                }
+
 
   }
 
