@@ -7,7 +7,7 @@ pipeline {
         steps {
             echo 'Running unit tests...'
             bat 'gradlew test'
-            junit 'build/test-results/test/*.xml'
+            unit allowEmptyResults: true, testResults: '**/test-results/test/*.xml'
             echo 'Archiving artifacts...'
             archiveArtifacts 'build/test-results/**/*'
             echo 'Generation Cucumber report'
