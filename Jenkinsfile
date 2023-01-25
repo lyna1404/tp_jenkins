@@ -1,86 +1,65 @@
 pipeline {
   agent any
   stages {
-
-
-    stage('Test') {
-        steps {
-            echo 'Running unit tests...'
-            sh './gradlew test'
-            junit 'build/test-results/test/TEST-Matrix.xml'
-            echo 'Archiving artifacts...'
-            archiveArtifacts 'build/test-results/**/*'
-            echo 'Generation Cucumber report'
-            cucumber buildStatus: 'UNSTABLE',
-                       reportTitle: 'My report',
-                       fileIncludePattern: 'target/report.json',
-                       trendsLimit: 10
-        }
+    stage("test"){
+      steps{
+      bat 'gradlew test'
+      junit 'build/test-results/test/*.xml'
+      cucumber buildStatus: 'UNSTABLE',
+      reportTitle: 'My report',
+      fileIncludePattern: 'target/report.json'
+      }
     }
-
-
-    stage('Code Analysis') {
-        steps {
-            echo 'Running gradle sonar'
-            withSonarQubeEnv('sonar') {
-              sh './gradlew sonar'
+    stage('SonarQube analysis') {
+      steps{
+       withSonarQubeEnv("sonar") { // Will pick the global server connection you have configured
+         bat 'gradlew sonarqube' }
+      }
+   
+    }
+   
+    stage("Quality Gate") {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    // Parameter indicates whether to set pipeline to UNSTABLE if Quality Gate fails
+                    // true = set pipeline to UNSTABLE, false = don't
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
-    }
-
-
-
-    stage("Code Quality") {
-        steps {
-            timeout(time: 1, unit: 'HOURS') {
-               waitForQualityGate abortPipeline: true
+     stage("Build") {
+            steps {
+                bat 'gradlew build'
+                bat 'gradlew javadoc'
+                archiveArtifacts 'build/libs/*.jar'
+                archiveArtifacts 'build/docs/'
             }
         }
-    }
+     stage("deploy") {
+            steps {
+                bat 'gradlew publish'
 
-
-
-     stage('Build') {
-          steps {
-            echo 'Generation .jar and Documentation...'
-            sh './gradlew build'
-            sh './gradlew javadoc'
-            echo 'Archiving artifacts...'
-            archiveArtifacts artifacts: 'build/libs/*.jar'
-            archiveArtifacts artifacts: 'build/docs/javadoc/**'
-            //junit(testResults: 'build/reports/tests/test', allowEmptyResults: true)
-          }
-     }
-
-     stage('Deploy') {
-        steps {
-            echo "Deployment..."
-            sh './gradlew publish'
+            }
         }
-     }
-
-
-
-
-    stage('Notify') {
-        steps {
-            echo "Notification..."
-            notifyEvents message: 'Build is created with success', token: '1pz9Q2Y6iaCplPrOxw3Ixo4905PL70vc'
-        }
+       
+    stage("notify"){
+     post {
+        always {
+        echo "End of Pipeline process"
+        mail(subject: 'End of Process Pipeline : Result incoming ...', body: 'End of Process Pipeline : Result incoming ...', from: 'jl_chikouche@esi.dz', to: 'jl_chikouche@esi.dz')
+      }
+      failure {
+        echo "Deployment failed"
+        mail(subject: 'Deployment failed', body: 'Deployment failed ', from: 'jl_chikouche@esi.dz', to: 'jl_chikouche@esi.dz')
+      }
+      success {
+        echo "Deployment succeeded"
+        mail(subject: 'Deployment succeeded', body: 'Deployment succeeded ', from: 'jl_chikouche@esi.dz', to: 'jl_chikouche@esi.dz')
+        notifyEvents message: 'Bonjour! : <b>Déploiement éffectué !</b> ! ', token: '1pz9Q2Y6iaCplPrOxw3Ixo4905PL70vc'
+      }
     }
-  }
-
-
-  post {
-    success {
-        mail to: "jl_chikouche@esi.dz",
-        subject: "Build Succeeded",
-        body: "This is an email that informs that the new Build is deployed with success!"
     }
-    failure {
-        mail to: "jl_chikouche@esi.dz",
-        subject: "Build failed",
-        body: "This is an email that informs that the new Build is deployed with failure!"
-    }
-  }
+   
+}
+
 }
