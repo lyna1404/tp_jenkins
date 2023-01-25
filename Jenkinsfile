@@ -3,7 +3,7 @@ pipeline {
   stages {
 
 
-    stage('Test') {
+    stage('Test')  {
         steps {
             echo 'Running unit tests...'
             bat 'gradlew test'
